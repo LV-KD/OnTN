@@ -1,0 +1,458 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace ThuHuong_OnTap_Bai1
+{
+    public partial class form1 : Form
+    {
+        public form1()
+        {
+            InitializeComponent();
+            
+        }
+        SqlConnection conn = new SqlConnection("Data Source=DESKTOP-F8IJG4K;Initial Catalog=ThuHuong_OnTapTN_Bai1;Integrated Security=True");
+        //Xây dựng hàm Load 
+        private void form1_Load(object sender, EventArgs e)
+        {
+            //Load ComboBox
+            DataTable dt = getNhaXuatBan();
+            comboBox1.DisplayMember = "tenNhaXB";
+            comboBox1.ValueMember = "maNhaXB";
+            comboBox1.DataSource = dt;
+            //
+            txtThanhTien.Enabled = false;
+            txtTongThanhTien.Enabled = false;
+            //
+            OnlyRead();
+        }
+        //
+        public DataTable getNhaXuatBan()
+        {
+            SqlDataAdapter da = new SqlDataAdapter("select * from NhaXuatBan", conn); 
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+        //
+        public DataTable getTruyenTranh(string maNXB)
+        {
+            SqlDataAdapter da = new SqlDataAdapter("select maTruyen,tenTruyen,tacGia,namXuatBan,donGia,soLuong,soLuong*donGia as thanhtien from TruyenTranh where maNhaXB = '"+maNXB+"'", conn);           
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+        //
+        public DataTable getTongThanhTien(string maNXB)
+        {
+            SqlDataAdapter da = new SqlDataAdapter("select sum(soLuong*donGia) as tongthanhtien from TruyenTranh where maNhaXB = '" + maNXB + "'", conn);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+        //
+        public void insertTruyenTranh(string maTruyen, string tenTruyen, string maNhaXB, string tacGia, int namXB, decimal donGia, int soLuong )
+        {
+            if (conn.State == ConnectionState.Closed)
+                conn.Open();
+            SqlCommand cmd = new SqlCommand("insert TruyenTranh values (@maTruyen,@tenTruyen,@maNhaXB,@tacGia,@namXuatBan,@soLuong,@donGia)", conn);
+            cmd.Parameters.AddWithValue("@maTruyen", maTruyen);
+            cmd.Parameters.AddWithValue("@tenTruyen", tenTruyen);
+            cmd.Parameters.AddWithValue("@maNhaXB", maNhaXB);
+            cmd.Parameters.AddWithValue("@tacGia", tacGia);
+            cmd.Parameters.AddWithValue("@namXuatBan", namXB);
+            cmd.Parameters.AddWithValue("@donGia", donGia);
+            cmd.Parameters.AddWithValue("@soLuong", soLuong);
+            cmd.ExecuteNonQuery();
+            if (cmd.ExecuteNonQuery() == 0)
+                MessageBox.Show("Thêm không thành công");
+            else MessageBox.Show("Thêm thành công");
+        }
+        //
+        public void deleteTruyenTranh(string maTruyen)
+        {
+            if (conn.State == ConnectionState.Closed)
+                conn.Open();
+            SqlCommand cmd = new SqlCommand("delete from TruyenTranh where maTruyen = @maTruyen", conn);
+            cmd.Parameters.AddWithValue("@maTruyen", maTruyen);          
+            cmd.ExecuteNonQuery();
+            if (cmd.ExecuteNonQuery() == 0)
+                MessageBox.Show("Xóa không thành công");
+            else MessageBox.Show("Xóa thành công");
+        }
+        //
+        public void updateTruyenTranh(string maTruyen, string tenTruyen, string maNhaXB, string tacGia, int namXB, decimal donGia, int soLuong )
+        {
+            if (conn.State == ConnectionState.Closed)
+                conn.Open();
+            SqlCommand cmd = new SqlCommand("update TruyenTranh set tenTruyen = @tenTruyen,maNhaXB = @maNhaXB,tacGia = @tacGia,namXuatBan = @namXuatBan,soLuong = @soLuong,donGia = @donGia where maTruyen = @maTruyen", conn);
+            cmd.Parameters.AddWithValue("@tenTruyen", tenTruyen);
+            cmd.Parameters.AddWithValue("@maNhaXB", maNhaXB);
+            cmd.Parameters.AddWithValue("@tacGia", tacGia);
+            cmd.Parameters.AddWithValue("@namXuatBan", namXB);
+            cmd.Parameters.AddWithValue("@donGia", donGia);
+            cmd.Parameters.AddWithValue("@soLuong", soLuong);
+            cmd.Parameters.AddWithValue("@maTruyen", maTruyen);
+            
+            cmd.ExecuteNonQuery();
+
+            if (cmd.ExecuteNonQuery() == 0)
+                MessageBox.Show("Sửa không thành công");
+            else MessageBox.Show("Sửa thành công");
+        }
+        //
+        public bool kiemtratrung(string maTruyen)
+        {
+            SqlDataAdapter da = new SqlDataAdapter("select * from TruyenTranh where maTruyen = '" + maTruyen + "'", conn);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            if (dt.Rows.Count > 0)
+                return true;//có trùng
+            return false;
+        }
+        //    
+        public void TextBoxNull()
+        {
+            txtMaTruyen.Text = "";
+            txtTenTruyen.Text = "";
+            txtTacGia.Text = "";
+            txtNamXB.Text = "";
+            txtDonGia.Text = "";
+            txtSoLuong.Text = "";
+            txtThanhTien.Text = "";
+        }
+        //
+        public void OnlyRead()
+        {
+            txtMaTruyen.ReadOnly = true;
+            txtTenTruyen.ReadOnly = true;
+            txtTacGia.ReadOnly = true;
+            txtNamXB.ReadOnly = true;
+            txtDonGia.ReadOnly = true;
+            txtSoLuong.ReadOnly = true;
+            txtThanhTien.ReadOnly = true;
+            btnLuu.Enabled = false;
+        }
+        //
+        public void Enable()
+        {
+            txtMaTruyen.ReadOnly = false;
+            txtTenTruyen.ReadOnly = false;
+            txtTacGia.ReadOnly = false;
+            txtNamXB.ReadOnly = false;
+            txtDonGia.ReadOnly = false;
+            txtSoLuong.ReadOnly = false;
+            txtThanhTien.ReadOnly = false;
+            btnLuu.Enabled = true;
+            btnXoa.Enabled = false;
+            btnThem.Enabled = false;
+        }
+        //
+        public void TextBoxControl(DataTable dt)
+        {
+            txtMaTruyen.DataBindings.Add("text", dt, "maTruyen");
+            txtTenTruyen.DataBindings.Add("text", dt, "tenTruyen");
+            txtTacGia.DataBindings.Add("text", dt, "tacGia");
+            txtNamXB.DataBindings.Add("text", dt, "namXuatBan");
+            txtDonGia.DataBindings.Add("text", dt, "donGia");
+            txtSoLuong.DataBindings.Add("text", dt, "soLuong");
+            txtThanhTien.DataBindings.Add("text", dt, "thanhTien");
+            //
+            txtMaTruyen.DataBindings.Clear();
+            txtTenTruyen.DataBindings.Clear();
+            txtTacGia.DataBindings.Clear();
+            txtNamXB.DataBindings.Clear();
+            txtDonGia.DataBindings.Clear();
+            txtSoLuong.DataBindings.Clear();
+            txtThanhTien.DataBindings.Clear();
+        }
+        //Đăng ký sự kiện thay đổi của ComboBox
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string s = comboBox1.SelectedValue.ToString();
+            //
+            DataTable dt = getTruyenTranh(s);
+            //
+            if (dt.Rows.Count > 0)
+            {
+                TextBoxControl(dt);
+            }
+            else
+            {
+                TextBoxNull();
+            }
+            dataGridView1.DataSource = dt;
+            //
+            DataTable dt1 = getTongThanhTien(s);
+            //
+            if (dt.Rows.Count > 0)
+            {
+                txtTongThanhTien.DataBindings.Add("text", dt1, "tongthanhtien");
+                txtTongThanhTien.DataBindings.Clear();
+            }
+            else
+            {
+                txtTongThanhTien.Text = "0";
+            }          
+        }
+        //Đăng ký sự kiện cell click trên datagridview
+        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            txtMaTruyen.Text = dataGridView1[0, e.RowIndex].Value.ToString();
+            txtTenTruyen.Text = dataGridView1[1, e.RowIndex].Value.ToString();
+            txtTacGia.Text = dataGridView1[2, e.RowIndex].Value.ToString();
+            txtNamXB.Text = dataGridView1[3, e.RowIndex].Value.ToString();
+            txtDonGia.Text = dataGridView1[4, e.RowIndex].Value.ToString();
+            txtSoLuong.Text = dataGridView1[5, e.RowIndex].Value.ToString();
+            txtThanhTien.Text = dataGridView1[6, e.RowIndex].Value.ToString();          
+        }
+        //Đăng ký sự kiện cho button NhapMoi
+        private void btnNhapMoi_Click(object sender, EventArgs e)
+        {
+            if (btnNhapMoi.Text.Equals("Nhập mới"))
+            {
+                btnNhapMoi.Text = "Hủy";
+                Enable();
+                TextBoxNull();
+            }
+            else
+            {
+                btnNhapMoi.Text = "Nhập mới";
+                OnlyRead();
+                TextBoxNull();
+            }
+        }
+        //Đăng ký sự kiện cho button Lưu 
+        private void btnLuu_Click(object sender, EventArgs e)
+        {
+            if (String.IsNullOrEmpty(txtMaTruyen.Text))
+            {
+                MessageBox.Show("Không bỏ trống Tên Truyện");
+                return;
+            }
+            if (String.IsNullOrEmpty(txtMaTruyen.Text))
+            {
+                MessageBox.Show("Không bỏ trống Mã Truyện");
+                return;
+            }
+            if (String.IsNullOrEmpty(txtTacGia.Text))
+            {
+                MessageBox.Show("Không bỏ trống Tác giả");
+                return;
+            }
+            if (String.IsNullOrEmpty(txtNamXB.Text))
+            {
+                MessageBox.Show("Không bỏ trống Năm XB");
+                return;
+            }
+            if (String.IsNullOrEmpty(txtDonGia.Text))
+            {
+                MessageBox.Show("Không bỏ trống Đơn Giá");
+                return;
+            }
+            if (String.IsNullOrEmpty(txtSoLuong.Text))
+            {
+                MessageBox.Show("Không bỏ trống Số Lượng");
+                return;
+            }
+            try
+            {
+                int nam = Convert.ToInt32(txtNamXB.Text);
+            }
+            catch
+            {
+                MessageBox.Show("Năm xuất bản phải là kiểu số");
+                return;
+            }
+            try
+            {
+                int soluong = Convert.ToInt32(txtSoLuong.Text);
+            }
+            catch
+            {
+                MessageBox.Show("Số lượng phải là kiểu số");
+                return;
+            } 
+            try
+            {
+                decimal donGia = Convert.ToDecimal(txtDonGia.Text);
+            }
+            catch
+            {
+                MessageBox.Show("Năm xuất bản phải là kiểu số");
+                return;
+            }
+            if (txtMaTruyen.Text.StartsWith("TR000")== false)
+            {
+                MessageBox.Show("Mã truyện phải bắt đầu bằng TR000");
+                return;
+            }
+            if (kiemtratrung(txtMaTruyen.Text)== true)
+            {
+                MessageBox.Show("Nhập Trùng Mã Truyện");
+                return;
+            }
+
+            insertTruyenTranh(txtMaTruyen.Text, txtTenTruyen.Text, comboBox1.SelectedValue.ToString(), txtTacGia.Text, Convert.ToInt32(txtNamXB.Text), Convert.ToDecimal(txtDonGia.Text), Convert.ToInt32(txtSoLuong.Text));
+            
+            //Load lai datagridView 
+            DataTable dt = getTruyenTranh(comboBox1.SelectedValue.ToString());
+            //
+            if (dt.Rows.Count > 0)
+            {
+                TextBoxControl(dt);
+            }
+            else
+            {
+                TextBoxNull();
+            }
+            dataGridView1.DataSource = dt;
+            //
+            DataTable dt1 = getTongThanhTien(comboBox1.SelectedValue.ToString());
+            //
+            if (dt.Rows.Count > 0)
+            {
+                txtTongThanhTien.DataBindings.Add("text", dt1, "tongthanhtien");
+                txtTongThanhTien.DataBindings.Clear();
+            }
+            else
+            {
+                txtTongThanhTien.Text = "0";
+            }          
+            //
+        }
+        //
+        private void btnXoa_Click(object sender, EventArgs e)
+        {
+            DialogResult r =MessageBox.Show("Bạn có chắc muốn xóa không?", "Thông báo", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button1);
+            if (r == DialogResult.Yes)
+            {
+                string s = dataGridView1[0, dataGridView1.CurrentCell.RowIndex].Value.ToString();
+                deleteTruyenTranh(s);
+                //Load lai datagridView 
+                DataTable dt = getTruyenTranh(comboBox1.SelectedValue.ToString());
+                //
+                if (dt.Rows.Count > 0)
+                {
+                    TextBoxControl(dt);
+                }
+                else
+                {
+                    TextBoxNull();
+                }
+                dataGridView1.DataSource = dt;
+                //
+                DataTable dt1 = getTongThanhTien(comboBox1.SelectedValue.ToString());
+                //
+                if (dt.Rows.Count > 0)
+                {
+                    txtTongThanhTien.DataBindings.Add("text", dt1, "tongthanhtien");
+                    txtTongThanhTien.DataBindings.Clear();
+                }
+                else
+                {
+                    txtTongThanhTien.Text = "0";
+                }
+                //
+            }
+            
+        }
+        //Đăng ký sự kiện sửa
+        private void btnSua_Click(object sender, EventArgs e)
+        {
+            if (String.IsNullOrEmpty(txtMaTruyen.Text))
+            {
+                MessageBox.Show("Không bỏ trống Tên Truyện");
+                return;
+            }
+            if (String.IsNullOrEmpty(txtMaTruyen.Text))
+            {
+                MessageBox.Show("Không bỏ trống Mã Truyện");
+                return;
+            }
+            if (String.IsNullOrEmpty(txtTacGia.Text))
+            {
+                MessageBox.Show("Không bỏ trống Tác giả");
+                return;
+            }
+            if (String.IsNullOrEmpty(txtNamXB.Text))
+            {
+                MessageBox.Show("Không bỏ trống Năm XB");
+                return;
+            }
+            if (String.IsNullOrEmpty(txtDonGia.Text))
+            {
+                MessageBox.Show("Không bỏ trống Đơn Giá");
+                return;
+            }
+            if (String.IsNullOrEmpty(txtSoLuong.Text))
+            {
+                MessageBox.Show("Không bỏ trống Số Lượng");
+                return;
+            }
+            try
+            {
+                int nam = Convert.ToInt32(txtNamXB.Text);
+            }
+            catch
+            {
+                MessageBox.Show("Năm xuất bản phải là kiểu số");
+                return;
+            }
+            try
+            {
+                int soluong = Convert.ToInt32(txtSoLuong.Text);
+            }
+            catch
+            {
+                MessageBox.Show("Số lượng phải là kiểu số");
+                return;
+            }
+            try
+            {
+                decimal donGia = Convert.ToDecimal(txtDonGia.Text);
+            }
+            catch
+            {
+                MessageBox.Show("Năm xuất bản phải là kiểu số");
+                return;
+            }
+
+            updateTruyenTranh(txtMaTruyen.Text, txtTenTruyen.Text, comboBox1.SelectedValue.ToString(), txtTacGia.Text, Convert.ToInt32(txtNamXB.Text), Convert.ToDecimal(txtDonGia.Text), Convert.ToInt32(txtSoLuong.Text));
+
+            //Load lai datagridView 
+            DataTable dt = getTruyenTranh(comboBox1.SelectedValue.ToString());
+            //
+            if (dt.Rows.Count > 0)
+            {
+                TextBoxControl(dt);
+            }
+            else
+            {
+                TextBoxNull();
+            }
+            dataGridView1.DataSource = dt;
+            //
+            DataTable dt1 = getTongThanhTien(comboBox1.SelectedValue.ToString());
+            //
+            if (dt.Rows.Count > 0)
+            {
+                txtTongThanhTien.DataBindings.Add("text", dt1, "tongthanhtien");
+                txtTongThanhTien.DataBindings.Clear();
+            }
+            else
+            {
+                txtTongThanhTien.Text = "0";
+            }
+            //
+        }
+        //
+    }
+}
